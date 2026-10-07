@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="course_list">
+        <item>Ciência da Computação</item>
+        <item>Engenharia Civil</item>
+        <item>Administração</item>
+        <item>Direito</item>
+        <item>Medicina</item>
+        <item>Outro</item>
+    </string-array>
+
+    <string-array name="type_filter_list">
+        <item>Todos</item>
+        <item>Abertos ao público</item>
+        <item>Do meu curso</item>
+    </string-array>
+</resources>

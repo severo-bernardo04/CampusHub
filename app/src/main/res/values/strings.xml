@@ -1,3 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">CampusHub</string>
+
+    <string name="login_subtitle">Entre para ver os eventos do campus</string>
+    <string name="register_title">Criar conta</string>
+    <string name="forgot_password_title">Recuperar senha</string>
+    <string name="forgot_password_subtitle">Informe o e-mail da sua conta</string>
+    <string name="events_title">Eventos</string>
+    <string name="my_events_title">Meus Eventos</string>
+    <string name="profile_title">Meu Perfil</string>
+
+    <string name="hint_full_name">Nome completo</string>
+    <string name="hint_email">E-mail</string>
+    <string name="hint_password">Senha</string>
+
+    <string name="action_login">Entrar</string>
+    <string name="action_register">Cadastrar</string>
+    <string name="action_send">Enviar</string>
+    <string name="action_my_events">Meus Eventos</string>
+    <string name="action_profile">Perfil</string>
+    <string name="action_save">Salvar</string>
+    <string name="action_logout">Sair</string>
+
+    <string name="link_to_register">Não tem conta? Cadastre-se</string>
+    <string name="link_forgot_password">Esqueci minha senha</string>
 </resources>
