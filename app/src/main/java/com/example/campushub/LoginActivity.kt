@@ -5,9 +5,9 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
-import kotlin.jvm.java
 
 class LoginActivity : AppCompatActivity() {
 
@@ -29,9 +29,17 @@ class LoginActivity : AppCompatActivity() {
             auth.signInWithEmailAndPassword(
                 emailInput.text.toString(),
                 passwordInput.text.toString()
-            ).addOnCompleteListener {
-                startActivity(Intent(this, EventsListActivity::class.java))
-                finish()
+            ).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    startActivity(Intent(this, EventsListActivity::class.java))
+                    finish()
+                } else {
+                    Toast.makeText(
+                        this,
+                        task.exception?.message ?: "Falha no login",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
 
