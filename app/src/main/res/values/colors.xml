@@ -1,9 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#2563EB</color>
-    <color name="background">#F4F6F8</color>
+    <color name="primary">#4F46E5</color>
+    <color name="primary_dark">#3730A3</color>
+    <color name="primary_light">#EEF2FF</color>
+    <color name="gradient_end">#7C3AED</color>
+
+    <color name="background">#F5F7FB</color>
+    <color name="text_primary">#101828</color>
     <color name="text_secondary">#667085</color>
-    <color name="border">#D0D5DD</color>
+    <color name="text_hint">#98A2B3</color>
+    <color name="border">#E4E7EC</color>
+    <color name="disabled">#D0D5DD</color>
+
+    <color name="success">#067647</color>
+    <color name="success_bg">#D1FADF</color>
+    <color name="warning">#B54708</color>
+    <color name="warning_bg">#FEF0C7</color>
+    <color name="danger">#D92D20</color>
+
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
+
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
 </resources>

@@ -2,10 +2,12 @@ package com.example.campushub
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.campushub.model.AppUser
 import com.google.firebase.auth.FirebaseAuth
@@ -23,6 +25,10 @@ class ProfileActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
+        findViewById<View>(R.id.backButton).setOnClickListener { finish() }
+
+        val avatarText = findViewById<TextView>(R.id.avatarText)
+        val profileName = findViewById<TextView>(R.id.profileName)
         val nameInput = findViewById<EditText>(R.id.nameInput)
         val emailText = findViewById<EditText>(R.id.emailInput)
         val courseSpinner = findViewById<Spinner>(R.id.courseSpinner)
@@ -43,6 +49,9 @@ class ProfileActivity : AppCompatActivity() {
             nameInput.setText(user.name)
             emailText.setText(user.email)
             courseSpinner.setSelection(courseAdapter.getPosition(user.course))
+
+            profileName.text = user.name
+            avatarText.text = user.name.trim().firstOrNull()?.uppercase() ?: "?"
         }
 
         saveButton.setOnClickListener {

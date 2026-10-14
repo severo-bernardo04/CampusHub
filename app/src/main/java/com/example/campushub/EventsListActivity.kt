@@ -2,9 +2,13 @@ package com.example.campushub
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -12,7 +16,6 @@ import com.example.campushub.model.AppUser
 import com.example.campushub.model.Event
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlin.jvm.java
 
 class EventsListActivity : AppCompatActivity() {
 
@@ -25,6 +28,8 @@ class EventsListActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var courseFilter: Spinner
     private lateinit var typeFilter: Spinner
+    private lateinit var greetingText: TextView
+    private lateinit var emptyText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +43,8 @@ class EventsListActivity : AppCompatActivity() {
 
         courseFilter = findViewById(R.id.courseFilterSpinner)
         typeFilter = findViewById(R.id.typeFilterSpinner)
+        greetingText = findViewById(R.id.greetingText)
+        emptyText = findViewById(R.id.emptyText)
 
         ArrayAdapter.createFromResource(
             this, R.array.type_filter_list, android.R.layout.simple_spinner_item
@@ -55,7 +62,7 @@ class EventsListActivity : AppCompatActivity() {
         }
 
         loadUserCourse()
-        loadEvents()
+        SeedEvents.run(db) { loadEvents() }
 
         courseFilter.setOnItemSelectedListener(SimpleSelectListener { applyFilters() })
         typeFilter.setOnItemSelectedListener(SimpleSelectListener { applyFilters() })
@@ -65,24 +72,34 @@ class EventsListActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid ?: return
         db.collection("users").document(uid).get()
             .addOnSuccessListener { doc ->
-                myCourse = doc.toObject(AppUser::class.java)?.course ?: ""
+                val user = doc.toObject(AppUser::class.java)
+                myCourse = user?.course ?: ""
+
+                val firstName = user?.name?.trim()?.split(" ")?.firstOrNull().orEmpty()
+                greetingText.text = if (firstName.isNotEmpty()) "Olá, $firstName" else "Olá!"
             }
     }
 
     private fun loadEvents() {
-        db.collection("events").get().addOnSuccessListener { result ->
-            allEvents = result.documents.map { doc ->
-                doc.toObject(Event::class.java)!!.apply { id = doc.id }
-            }
+        db.collection("events").get()
+            .addOnSuccessListener { result ->
+                allEvents = result.documents.map { doc ->
+                    doc.toObject(Event::class.java)!!.apply { id = doc.id }
+                }
 
-            val courses = listOf("Todos os cursos") + allEvents.map { it.hostCourse }.distinct()
-            ArrayAdapter(this, android.R.layout.simple_spinner_item, courses).also {
-                it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                courseFilter.adapter = it
-            }
+                val courses = listOf("Todos os cursos") +
+                        allEvents.map { it.hostCourse }.distinct()
+                ArrayAdapter(this, android.R.layout.simple_spinner_item, courses).also {
+                    it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                    courseFilter.adapter = it
+                }
 
-            applyFilters()
-        }
+                applyFilters()
+            }
+            .addOnFailureListener {
+                Log.e("EVENTS", "Falha ao carregar", it)
+                Toast.makeText(this, it.message, Toast.LENGTH_LONG).show()
+            }
     }
 
     private fun applyFilters() {
@@ -97,6 +114,8 @@ class EventsListActivity : AppCompatActivity() {
             "Abertos ao público" -> filtered = filtered.filter { it.isPublic }
             "Do meu curso" -> filtered = filtered.filter { it.hostCourse == myCourse }
         }
+
+        emptyText.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
 
         recyclerView.adapter = EventAdapter(filtered) { event ->
             val intent = Intent(this, EventDetailActivity::class.java)

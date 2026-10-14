@@ -16,6 +16,7 @@ class EventAdapter(
         val title: TextView = view.findViewById(R.id.itemTitle)
         val course: TextView = view.findViewById(R.id.itemCourse)
         val date: TextView = view.findViewById(R.id.itemDate)
+        val location: TextView = view.findViewById(R.id.itemLocation)
         val badge: TextView = view.findViewById(R.id.itemBadge)
     }
 
@@ -27,10 +28,23 @@ class EventAdapter(
 
     override fun onBindViewHolder(holder: EventViewHolder, position: Int) {
         val event = events[position]
+        val context = holder.itemView.context
+
         holder.title.text = event.title
         holder.course.text = event.hostCourse
         holder.date.text = event.date
-        holder.badge.text = if (event.isPublic) "Público" else "Fechado ao curso"
+        holder.location.text = event.location
+
+        if (event.isPublic) {
+            holder.badge.text = "Público"
+            holder.badge.setBackgroundResource(R.drawable.bg_badge_public)
+            holder.badge.setTextColor(context.getColor(R.color.success))
+        } else {
+            holder.badge.text = "Fechado"
+            holder.badge.setBackgroundResource(R.drawable.bg_badge_closed)
+            holder.badge.setTextColor(context.getColor(R.color.warning))
+        }
+
         holder.itemView.setOnClickListener { onClick(event) }
     }
 

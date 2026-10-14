@@ -1,6 +1,7 @@
 package com.example.campushub
 
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -26,6 +27,8 @@ class EventDetailActivity : AppCompatActivity() {
         db = FirebaseFirestore.getInstance()
         eventId = intent.getStringExtra("eventId") ?: return
 
+        findViewById<View>(R.id.backButton).setOnClickListener { finish() }
+
         enrollButton = findViewById(R.id.enrollButton)
 
         loadEvent()
@@ -40,8 +43,17 @@ class EventDetailActivity : AppCompatActivity() {
             findViewById<TextView>(R.id.detailDate).text = event.date
             findViewById<TextView>(R.id.detailLocation).text = event.location
             findViewById<TextView>(R.id.detailCourse).text = event.hostCourse
-            findViewById<TextView>(R.id.detailAccess).text =
-                if (event.isPublic) "Aberto ao público" else "Fechado ao curso ${event.hostCourse}"
+
+            val access = findViewById<TextView>(R.id.detailAccess)
+            if (event.isPublic) {
+                access.text = "Aberto ao público"
+                access.setBackgroundResource(R.drawable.bg_badge_public)
+                access.setTextColor(getColor(R.color.success))
+            } else {
+                access.text = "Fechado ao curso"
+                access.setBackgroundResource(R.drawable.bg_badge_closed)
+                access.setTextColor(getColor(R.color.warning))
+            }
 
             checkAccessAndEnrollment(event)
         }
@@ -56,11 +68,23 @@ class EventDetailActivity : AppCompatActivity() {
 
             if (!canEnroll) {
                 enrollButton.isEnabled = false
-                enrollButton.text = "Evento fechado para seu curso"
+                enrollButton.text = "Evento fechado para o seu curso"
+                enrollButton.setBackgroundResource(R.drawable.bg_button)
+                enrollButton.setTextColor(getColor(R.color.text_secondary))
                 return@addOnSuccessListener
             }
 
             refreshEnrollButton()
+        }
+    }
+
+    private fun styleEnrollButton(enrolled: Boolean) {
+        if (enrolled) {
+            enrollButton.setBackgroundResource(R.drawable.bg_button_danger)
+            enrollButton.setTextColor(getColor(R.color.danger))
+        } else {
+            enrollButton.setBackgroundResource(R.drawable.bg_button)
+            enrollButton.setTextColor(getColor(R.color.white))
         }
     }
 
@@ -71,11 +95,13 @@ class EventDetailActivity : AppCompatActivity() {
 
         enrollmentRef.get().addOnSuccessListener { doc ->
             if (doc.exists()) {
+                styleEnrollButton(true)
                 enrollButton.text = "Cancelar inscrição"
                 enrollButton.setOnClickListener {
                     enrollmentRef.delete().addOnCompleteListener { refreshEnrollButton() }
                 }
             } else {
+                styleEnrollButton(false)
                 enrollButton.text = "Inscrever-se"
                 enrollButton.setOnClickListener {
                     enrollmentRef.set(mapOf("eventId" to eventId))
