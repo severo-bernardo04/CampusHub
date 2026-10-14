@@ -1,11 +1,15 @@
 package com.example.campushub.model
 
+import com.google.firebase.firestore.Exclude
+import com.google.firebase.firestore.PropertyName
+
 data class Event(
-    var id: String = "",
+    @get:Exclude var id: String = "",
     val title: String = "",
     val description: String = "",
     val date: String = "",
     val location: String = "",
     val hostCourse: String = "",
-    val isPublic: Boolean = true
+    @get:PropertyName("isPublic") @set:PropertyName("isPublic")
+    var isPublic: Boolean = true
 )
