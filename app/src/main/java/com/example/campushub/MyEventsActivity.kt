@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.campushub.model.Event
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 
 class MyEventsActivity : AppCompatActivity() {
@@ -38,35 +37,40 @@ class MyEventsActivity : AppCompatActivity() {
         loadMyEvents()
     }
 
-    private fun showEvents(events: List<Event>) {
+    private fun showEvents(events: List<Event>, favoriteIds: MutableSet<String>, uid: String) {
         emptyText.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
-        recyclerView.adapter = EventAdapter(events) { event ->
-            val intent = Intent(this, EventDetailActivity::class.java)
-            intent.putExtra("eventId", event.id)
-            startActivity(intent)
-        }
+        recyclerView.adapter = EventAdapter(
+            events = events,
+            favoriteIds = favoriteIds,
+            onFavoriteChanged = { event, favorite ->
+                FavoriteRepository.set(db, uid, event.id, favorite)
+            },
+            onClick = { event ->
+                val intent = Intent(this, EventDetailActivity::class.java)
+                intent.putExtra("eventId", event.id)
+                startActivity(intent)
+            }
+        )
     }
 
     private fun loadMyEvents() {
         val uid = auth.currentUser?.uid ?: return
 
-        db.collection("users").document(uid).collection("enrollments").get()
-            .addOnSuccessListener { enrollments ->
-                val eventIds = enrollments.documents.map { it.id }
+        FavoriteRepository.loadIds(db, uid) { favoriteIds ->
+            db.collection("users").document(uid).collection("enrollments").get()
+                .addOnSuccessListener { enrollments ->
+                    val enrolledIds = enrollments.documents.map { it.id }.toSet()
 
-                if (eventIds.isEmpty()) {
-                    showEvents(emptyList())
-                    return@addOnSuccessListener
-                }
-
-                db.collection("events")
-                    .whereIn(FieldPath.documentId(), eventIds.take(10))
-                    .get()
-                    .addOnSuccessListener { result ->
-                        showEvents(result.documents.map { doc ->
-                            doc.toObject(Event::class.java)!!.apply { id = doc.id }
-                        })
+                    db.collection("events").get().addOnSuccessListener { result ->
+                        val events = result.documents
+                            .mapNotNull { doc ->
+                                doc.toObject(Event::class.java)?.apply { id = doc.id }
+                            }
+                            .filter { it.id in enrolledIds }
+                            .sortedBy { it.dateMillis }
+                        showEvents(events, favoriteIds, uid)
                     }
-            }
+                }
+        }
     }
 }
