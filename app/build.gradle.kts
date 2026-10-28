@@ -34,6 +34,7 @@ android {
 
 dependencies {
     implementation("com.google.firebase:firebase-auth")
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
     implementation("com.google.firebase:firebase-firestore")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
