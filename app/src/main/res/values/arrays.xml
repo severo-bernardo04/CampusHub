@@ -14,4 +14,21 @@
         <item>Abertos ao público</item>
         <item>Do meu curso</item>
     </string-array>
+
+    <string-array name="category_filter_list">
+        <item>Todas as categorias</item>
+        <item>Palestra</item>
+        <item>Workshop</item>
+        <item>Feira</item>
+        <item>Visita Técnica</item>
+        <item>Cultural</item>
+        <item>Esporte</item>
+        <item>Social</item>
+    </string-array>
+
+    <string-array name="situation_filter_list">
+        <item>Todos os eventos</item>
+        <item>Próximos</item>
+        <item>Encerrados</item>
+    </string-array>
 </resources>

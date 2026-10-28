@@ -9,12 +9,22 @@
     <string name="forgot_password_subtitle">Enviaremos um link de redefinição para o seu e-mail</string>
     <string name="events_title">Eventos</string>
     <string name="my_events_title">Meus Eventos</string>
+    <string name="favorites_title">Meus Favoritos</string>
     <string name="profile_title">Meu Perfil</string>
     <string name="event_details_title">Detalhes</string>
+    <string name="comments_title">Comentários</string>
+    <string name="media_title">Mídias do evento</string>
     <string name="about_event">Sobre o evento</string>
+    <string name="location_title">Localização</string>
+    <string name="rating_title">Avaliação</string>
     <string name="greeting_default">Olá!</string>
+
     <string name="empty_events">Nenhum evento encontrado com esses filtros.</string>
     <string name="empty_my_events">Você ainda não está inscrito em nenhum evento.</string>
+    <string name="empty_favorites">Você ainda não favoritou nenhum evento.</string>
+    <string name="empty_comments">Nenhum comentário ainda. Seja o primeiro!</string>
+    <string name="empty_media">Nenhuma publicação ainda. Compartilhe uma foto, um áudio ou um vídeo!</string>
+    <string name="file_unavailable">Arquivo indisponível neste dispositivo</string>
 
     <string name="label_name">Nome</string>
     <string name="label_email">E-mail</string>
@@ -23,15 +33,31 @@
     <string name="hint_full_name">Nome completo</string>
     <string name="hint_email">E-mail</string>
     <string name="hint_password">Senha</string>
+    <string name="hint_search">Buscar evento pelo título</string>
+    <string name="hint_comment">Escreva um comentário…</string>
 
     <string name="action_login">Entrar</string>
     <string name="action_register">Cadastrar</string>
     <string name="action_send">Enviar link</string>
     <string name="action_my_events">Meus Eventos</string>
+    <string name="action_favorites">Favoritos</string>
     <string name="action_profile">Perfil</string>
     <string name="action_save">Salvar alterações</string>
     <string name="action_logout">Sair da conta</string>
+    <string name="action_directions">Como chegar</string>
+    <string name="action_comments">Comentários</string>
+    <string name="action_media">Mídias</string>
+    <string name="action_publish">Publicar</string>
+    <string name="action_edit">Editar</string>
+    <string name="action_delete">Excluir</string>
+    <string name="action_take_photo">Tirar foto</string>
+    <string name="action_pick_photo">Foto da galeria</string>
+    <string name="action_record_audio">Gravar áudio</string>
+    <string name="action_record_video">Gravar vídeo</string>
+    <string name="action_pick_video">Vídeo da galeria</string>
+    <string name="publish_section">Publicar no evento</string>
     <string name="cd_back">Voltar</string>
+    <string name="cd_favorite">Favoritar</string>
 
     <string name="link_to_register">Não tem conta? Cadastre-se</string>
     <string name="link_forgot_password">Esqueci minha senha</string>
