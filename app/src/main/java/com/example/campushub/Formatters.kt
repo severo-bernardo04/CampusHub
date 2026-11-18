@@ -1,5 +1,6 @@
 package com.example.campushub
 
+import com.example.campushub.domain.EventStatus
 import com.example.campushub.model.Event
 import java.text.Normalizer
 import java.text.SimpleDateFormat
@@ -9,8 +10,9 @@ import java.util.Locale
 fun Long.toDateTimeString(): String =
     SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale.forLanguageTag("pt-BR")).format(Date(this))
 
-/** Evento encerrado = a data/hora dele já passou. */
-fun Event.isFinished(): Boolean = dateMillis < System.currentTimeMillis()
+/** Encerrado = o organizador encerrou OU a data/hora já passou. */
+fun Event.isFinished(now: Long = System.currentTimeMillis()): Boolean =
+    status == EventStatus.CLOSED || dateMillis < now
 
 fun Event.formattedDate(): String = dateMillis.toDateTimeString()
 
