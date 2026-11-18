@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:fillViewport="true"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/backButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_icon_button"
+                android:clickable="true"
+                android:contentDescription="@string/cd_back"
+                android:focusable="true"
+                android:padding="10dp"
+                android:src="@drawable/ic_arrow_back" />
+
+            <TextView
+                android:id="@+id/formTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:text="Novo evento"
+                android:textColor="@color/text_primary"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_card"
+            android:elevation="2dp"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView style="@style/CampusLabel" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:text="Título" />
+            <EditText
+                android:id="@+id/titleInput"
+                style="@style/CampusInput"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="6dp"
+                android:hint="Ex.: Semana da Computação"
+                android:inputType="textCapSentences" />
+
+            <TextView style="@style/CampusLabel" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                android:text="Descrição" />
+            <EditText
+                android:id="@+id/descriptionInput"
+                style="@style/CampusInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="top"
+                android:hint="Sobre o evento"
+                android:inputType="textCapSentences|textMultiLine"
+                android:minHeight="96dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp" />
+
+            <TextView style="@style/CampusLabel" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                android:text="Categoria" />
+            <Spinner
+                android:id="@+id/categorySpinner"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_spinner"
+                android:paddingStart="8dp"
+                android:paddingEnd="36dp" />
+
+            <TextView style="@style/CampusLabel" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                android:text="Curso responsável" />
+            <Spinner
+                android:id="@+id/courseSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_spinner"
+                android:paddingStart="8dp"
+                android:paddingEnd="36dp" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/publicSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:checked="true"
+                android:text="Aberto ao público (desligado = só alunos do curso)"
+                android:textColor="@color/text_primary" />
+
+            <TextView style="@style/CampusLabel" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                android:text="Data e hora" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/dateButton"
+                    style="@style/CampusButtonOutline"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/timeButton"
+                    style="@style/CampusButtonOutline"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <TextView style="@style/CampusLabel" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                android:text="Local" />
+            <EditText
+                android:id="@+id/locationInput"
+                style="@style/CampusInput"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="6dp"
+                android:hint="Ex.: URI Câmpus Santiago"
+                android:inputType="textCapSentences" />
+
+            <TextView style="@style/CampusLabel" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                android:text="Endereço" />
+            <EditText
+                android:id="@+id/addressInput"
+                style="@style/CampusInput"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="6dp"
+                android:hint="Ex.: Rua Pinheiro Machado, 1939, Santiago - RS"
+                android:inputType="textPostalAddress" />
+
+            <Button
+                android:id="@+id/searchMapButton"
+                style="@style/CampusButtonOutline"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:layout_marginTop="8dp"
+                android:text="Buscar no mapa" />
+
+            <TextView
+                android:id="@+id/mapStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Endereço ainda não localizado no mapa"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <TextView style="@style/CampusLabel" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                android:text="Capacidade máxima" />
+            <EditText
+                android:id="@+id/capacityInput"
+                style="@style/CampusInput"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="6dp"
+                android:hint="Número de vagas"
+                android:inputType="number" />
+
+            <TextView style="@style/CampusLabel" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                android:text="Imagem do evento" />
+            <ImageView
+                android:id="@+id/imagePreview"
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                android:layout_marginTop="6dp"
+                android:contentDescription="@null"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/pickImageButton"
+                    style="@style/CampusButtonOutline"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_weight="1"
+                    android:text="Escolher imagem" />
+
+                <Button
+                    android:id="@+id/removeImageButton"
+                    style="@style/CampusButtonDanger"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="Remover"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/saveButton"
+            style="@style/CampusButtonOutline"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="20dp"
+            android:text="Salvar rascunho" />
+
+        <Button
+            android:id="@+id/publishButton"
+            style="@style/CampusButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:text="Salvar e publicar" />
+    </LinearLayout>
+</ScrollView>
