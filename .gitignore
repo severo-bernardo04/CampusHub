@@ -1,6 +1,11 @@
 # Created by https://www.toptal.com/developers/gitignore/api/androidstudio,kotlin,firebase
 # Edit at https://www.toptal.com/developers/gitignore?templates=androidstudio,kotlin,firebase
 
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.firebase/
+
 ### Firebase ###
 .idea
 **/node_modules/*
@@ -8,7 +13,6 @@
 
 ### Firebase Patch ###
 .runtimeconfig.json
-.firebase/
 
 ### Kotlin ###
 # Compiled class file
