@@ -6,13 +6,24 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RatingBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.campushub.domain.CapacityPolicy
+import com.example.campushub.domain.EnrollmentPolicy
+import com.example.campushub.domain.EnrollmentState
+import com.example.campushub.domain.PostPolicy
+import com.example.campushub.domain.RatingAccess
+import com.example.campushub.domain.RatingPolicy
+import com.example.campushub.domain.RatingSummary
+import com.example.campushub.domain.RegistrationStatus
 import com.example.campushub.model.AppUser
 import com.example.campushub.model.Event
+import com.example.campushub.model.Registration
+import com.example.campushub.model.RegistrationUser
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import org.osmdroid.config.Configuration
@@ -21,7 +32,6 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import java.io.File
-import java.util.Locale
 
 class EventDetailActivity : AppCompatActivity() {
 
@@ -34,6 +44,9 @@ class EventDetailActivity : AppCompatActivity() {
     private lateinit var directionsButton: Button
     private lateinit var favoriteButton: Button
     private lateinit var enrollButton: Button
+    private lateinit var qrButton: Button
+    private lateinit var capacityText: TextView
+    private lateinit var detailImage: ImageView
     private lateinit var ratingSummary: TextView
     private lateinit var ratingHint: TextView
     private lateinit var ratingInput: LinearLayout
@@ -41,13 +54,16 @@ class EventDetailActivity : AppCompatActivity() {
     private lateinit var ratingSubmitButton: Button
 
     private var event: Event? = null
+    private var registration: Registration? = null
     private var userLoaded = false
     private var myCourse = ""
-    private var enrolled = false
+    private var myName = ""
     private var favorite = false
     private var myStars = 0
-    private var ratingAvg = 0.0
-    private var ratingCount = 0
+    private var ratingSummaryData = RatingSummary(0.0, 0)
+
+    private val enrolled: Boolean
+        get() = registration?.status == RegistrationStatus.CONFIRMED
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,9 +83,12 @@ class EventDetailActivity : AppCompatActivity() {
         findViewById<View>(R.id.backButton).setOnClickListener { finish() }
         directionsButton.setOnClickListener { openDirections() }
         favoriteButton.setOnClickListener { toggleFavorite() }
-        enrollButton.setOnClickListener { toggleEnrollment() }
+        enrollButton.setOnClickListener { onEnrollClicked() }
         ratingSubmitButton.setOnClickListener { submitRating() }
 
+        qrButton.setOnClickListener {
+            startActivity(Intent(this, QrCodeActivity::class.java).putExtra("eventId", eventId))
+        }
         findViewById<Button>(R.id.commentsButton).setOnClickListener {
             startActivity(Intent(this, CommentsActivity::class.java).putExtra("eventId", eventId))
         }
@@ -79,7 +98,7 @@ class EventDetailActivity : AppCompatActivity() {
 
         loadEvent()
         loadUser()
-        loadEnrollment()
+        loadRegistration()
         loadFavorite()
         loadRatings()
     }
@@ -87,9 +106,14 @@ class EventDetailActivity : AppCompatActivity() {
     private fun configureMap() {
         val config = Configuration.getInstance()
         config.load(applicationContext, getSharedPreferences("osmdroid", MODE_PRIVATE))
-        config.userAgentValue = packageName
-        config.osmdroidBasePath = File(cacheDir, "osmdroid")
-        config.osmdroidTileCache = File(cacheDir, "osmdroid/tiles")
+
+        // O OpenStreetMap exige um User-Agent que identifique o app e como contatar o responsável.
+        // Troque SEU_EMAIL pelo seu e-mail real.
+        config.userAgentValue = "CampusHub/1.0 (projeto academico URI Santiago; contato: 109827@urisantiago.br)"
+
+        // Pasta nova de cache: descarta os blocos "Access blocked" já gravados
+        config.osmdroidBasePath = File(cacheDir, "osmdroid_v2")
+        config.osmdroidTileCache = File(cacheDir, "osmdroid_v2/tiles")
     }
 
     private fun bindViews() {
@@ -98,6 +122,9 @@ class EventDetailActivity : AppCompatActivity() {
         directionsButton = findViewById(R.id.directionsButton)
         favoriteButton = findViewById(R.id.favoriteButton)
         enrollButton = findViewById(R.id.enrollButton)
+        qrButton = findViewById(R.id.qrButton)
+        capacityText = findViewById(R.id.detailCapacity)
+        detailImage = findViewById(R.id.detailImage)
         ratingSummary = findViewById(R.id.ratingSummary)
         ratingHint = findViewById(R.id.ratingHint)
         ratingInput = findViewById(R.id.ratingInput)
@@ -129,20 +156,21 @@ class EventDetailActivity : AppCompatActivity() {
     private fun loadUser() {
         val uid = auth.currentUser?.uid ?: return
         db.collection("users").document(uid).get().addOnSuccessListener { doc ->
-            myCourse = doc.toObject(AppUser::class.java)?.course ?: ""
+            val user = doc.toObject(AppUser::class.java)
+            myCourse = user?.course ?: ""
+            myName = user?.name ?: ""
             userLoaded = true
             refreshActions()
         }
     }
 
-    private fun loadEnrollment() {
+    private fun loadRegistration() {
         val uid = auth.currentUser?.uid ?: return
-        db.collection("users").document(uid).collection("enrollments").document(eventId)
-            .get().addOnSuccessListener { doc ->
-                enrolled = doc.exists()
-                refreshActions()
-                refreshRating()
-            }
+        RegistrationRepository.loadOwn(db, uid, eventId) {
+            registration = it
+            refreshActions()
+            refreshRating()
+        }
     }
 
     private fun loadFavorite() {
@@ -158,21 +186,18 @@ class EventDetailActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid
         db.collection("events").document(eventId).collection("ratings").get()
             .addOnSuccessListener { snapshot ->
-                var sum = 0L
-                var count = 0
-                myStars = 0
-                snapshot.documents.forEach { doc ->
-                    val stars = (doc.getLong("stars") ?: 0L).toInt()
-                    if (stars in 1..5) {
-                        sum += stars
-                        count++
-                        if (doc.id == uid) myStars = stars
-                    }
-                }
-                ratingCount = count
-                ratingAvg = if (count > 0) sum.toDouble() / count else 0.0
+                val ratings = snapshot.documents.map { it.id to (it.getLong("stars") ?: 0L).toInt() }
+                ratingSummaryData = RatingPolicy.summarize(ratings.map { it.second })
+                myStars = ratings
+                    .firstOrNull { it.first == uid && RatingPolicy.isValid(it.second) }
+                    ?.second ?: 0
                 refreshRating()
             }
+    }
+
+    private fun reload() {
+        loadEvent()
+        loadRegistration()
     }
 
     // ---------- Exibição ----------
@@ -184,6 +209,10 @@ class EventDetailActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.detailLocation).text = ev.location
         findViewById<TextView>(R.id.detailAddress).text = ev.address
         findViewById<TextView>(R.id.detailCourse).text = ev.hostCourse
+
+        val bitmap = ImageCodec.decode(ev.imageBase64, 900)
+        detailImage.visibility = if (bitmap != null) View.VISIBLE else View.GONE
+        detailImage.setImageBitmap(bitmap)
 
         val category = findViewById<TextView>(R.id.detailCategory)
         category.text = ev.category
@@ -211,6 +240,11 @@ class EventDetailActivity : AppCompatActivity() {
             status.setTextColor(getColor(R.color.success))
         }
 
+        capacityText.text = listOf(
+            CapacityPolicy.occupancyLabel(ev),
+            CapacityPolicy.waitlistLabel(ev)
+        ).filter { it.isNotEmpty() }.joinToString("\n")
+
         showMap(ev)
     }
 
@@ -230,6 +264,7 @@ class EventDetailActivity : AppCompatActivity() {
             title = ev.location
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
         }
+        mapView.overlays.clear()
         mapView.overlays.add(marker)
         mapView.invalidate()
     }
@@ -246,18 +281,40 @@ class EventDetailActivity : AppCompatActivity() {
         }
     }
 
+    private fun currentState(): EnrollmentState? {
+        val ev = event ?: return null
+        return EnrollmentPolicy.stateFor(
+            ev, userLoaded, myCourse, registration?.status, auth.currentUser?.uid.orEmpty()
+        )
+    }
+
     private fun refreshActions() {
         val ev = event ?: return
-
         favoriteButton.text = if (favorite) "♥ Favoritado" else "♡ Favoritar"
+        qrButton.visibility = if (enrolled) View.VISIBLE else View.GONE
 
-        val canEnroll = ev.isPublic || myCourse == ev.hostCourse
-        when {
-            ev.isFinished() -> styleEnroll("Evento encerrado", enabled = false, danger = false)
-            !userLoaded -> styleEnroll("Carregando…", enabled = false, danger = false)
-            !canEnroll -> styleEnroll("Fechado para o seu curso", enabled = false, danger = false)
-            enrolled -> styleEnroll("Cancelar inscrição", enabled = true, danger = true)
-            else -> styleEnroll("Inscrever-se", enabled = true, danger = false)
+        when (currentState()) {
+            EnrollmentState.FINISHED ->
+                styleEnroll("Evento encerrado", enabled = false, danger = false)
+            EnrollmentState.NOT_OPEN ->
+                styleEnroll("Evento ainda não publicado", enabled = false, danger = false)
+            EnrollmentState.LOADING, null ->
+                styleEnroll("Carregando…", enabled = false, danger = false)
+            EnrollmentState.CLOSED_FOR_COURSE ->
+                styleEnroll("Fechado para o seu curso", enabled = false, danger = false)
+            EnrollmentState.CAN_CANCEL ->
+                styleEnroll("Cancelar inscrição", enabled = true, danger = true)
+            EnrollmentState.CAN_ENROLL ->
+                styleEnroll("Inscrever-se", enabled = true, danger = false)
+            EnrollmentState.FULL_CAN_JOIN_WAITLIST ->
+                styleEnroll("Entrar na lista de espera", enabled = true, danger = false)
+            EnrollmentState.OFFER_AVAILABLE ->
+                styleEnroll("Vaga disponível: confirmar inscrição", enabled = true, danger = false)
+            EnrollmentState.ON_WAITLIST -> {
+                val place = CapacityPolicy.waitlistPosition(ev, auth.currentUser?.uid.orEmpty())
+                val suffix = if (place != null) " (${place}º da fila)" else ""
+                styleEnroll("Sair da lista de espera$suffix", enabled = true, danger = true)
+            }
         }
     }
 
@@ -278,26 +335,20 @@ class EventDetailActivity : AppCompatActivity() {
     private fun refreshRating() {
         val ev = event ?: return
 
-        ratingSummary.text = if (ratingCount == 0) {
-            "Ainda sem avaliações"
-        } else {
-            val average = String.format(Locale.forLanguageTag("pt-BR"), "%.1f", ratingAvg)
-            val label = if (ratingCount == 1) "1 avaliação" else "$ratingCount avaliações"
-            "★ $average  ·  $label"
-        }
+        ratingSummary.text = ratingSummaryData.label()
 
-        when {
-            !ev.isFinished() -> {
+        when (RatingPolicy.accessFor(ev, enrolled)) {
+            RatingAccess.NOT_FINISHED -> {
                 ratingHint.text = "A avaliação fica disponível depois que o evento terminar."
                 ratingHint.visibility = View.VISIBLE
                 ratingInput.visibility = View.GONE
             }
-            !enrolled -> {
+            RatingAccess.NOT_ENROLLED -> {
                 ratingHint.text = "Somente alunos inscritos podem avaliar este evento."
                 ratingHint.visibility = View.VISIBLE
                 ratingInput.visibility = View.GONE
             }
-            else -> {
+            RatingAccess.CAN_RATE -> {
                 ratingHint.visibility = View.GONE
                 ratingInput.visibility = View.VISIBLE
                 ratingBar.rating = myStars.toFloat()
@@ -318,30 +369,45 @@ class EventDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun toggleEnrollment() {
-        val uid = auth.currentUser?.uid ?: return
-        val ref = db.collection("users").document(uid)
-            .collection("enrollments").document(eventId)
+    private fun onEnrollClicked() {
+        val user = auth.currentUser ?: return
+        val me = RegistrationUser(
+            uid = user.uid,
+            name = PostPolicy.displayName(myName, user.email),
+            email = user.email.orEmpty()
+        )
 
-        if (enrolled) {
-            ref.delete().addOnSuccessListener {
-                enrolled = false
-                refreshActions()
-                refreshRating()
-            }
-        } else {
-            ref.set(mapOf("eventId" to eventId)).addOnSuccessListener {
-                enrolled = true
-                refreshActions()
-                refreshRating()
-            }
+        when (currentState()) {
+            EnrollmentState.CAN_ENROLL, EnrollmentState.FULL_CAN_JOIN_WAITLIST ->
+                RegistrationRepository.enroll(db, me, eventId) { result ->
+                    handle(result) {
+                        if (it == RegistrationStatus.CONFIRMED) "Inscrição confirmada!"
+                        else "Você entrou na lista de espera"
+                    }
+                }
+            EnrollmentState.CAN_CANCEL, EnrollmentState.ON_WAITLIST ->
+                RegistrationRepository.cancel(db, me.uid, eventId) { result ->
+                    handle(result) { "Inscrição cancelada" }
+                }
+            EnrollmentState.OFFER_AVAILABLE ->
+                RegistrationRepository.confirmFromWaitlist(db, me.uid, eventId) { result ->
+                    handle(result) { "Inscrição confirmada!" }
+                }
+            else -> Unit
         }
+    }
+
+    private fun handle(result: Result<String>, successMessage: (String) -> String) {
+        result
+            .onSuccess { toast(successMessage(it)) }
+            .onFailure { toast(it.message) }
+        reload()
     }
 
     private fun submitRating() {
         val uid = auth.currentUser?.uid ?: return
         val stars = ratingBar.rating.toInt()
-        if (stars < 1) {
+        if (!RatingPolicy.isValid(stars)) {
             toast("Escolha de 1 a 5 estrelas")
             return
         }
