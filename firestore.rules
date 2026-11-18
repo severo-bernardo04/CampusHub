@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+
+    function isOrganizer() {
+      return isSignedIn() &&
+                          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'organizer';
+    }
+
+    function isEventOwner(eventId) {
+      return isSignedIn() &&
+                          get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+    }
+
+    match /events/{eventId} {
+      allow read: if isSignedIn();
+
+      allow create: if isOrganizer()
+          && request.resource.data.organizerId == request.auth.uid;
+
+      // Organizador dono edita tudo; aluno só mexe no contador de vagas e na fila
+      allow update: if (isOrganizer()
+          && resource.data.organizerId == request.auth.uid
+          && request.resource.data.organizerId == resource.data.organizerId)
+          || (isSignedIn()
+              && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['confirmedCount', 'waitlist'])
+              && request.resource.data.confirmedCount >= 0
+              && (resource.data.capacity == 0
+                  || request.resource.data.confirmedCount <= resource.data.capacity));
+
+      allow delete: if isOrganizer() && resource.data.organizerId == request.auth.uid;
+
+      match /registrations/{userId} {
+        allow read: if isSignedIn() && (request.auth.uid == userId || isEventOwner(eventId));
+
+        allow create: if isSignedIn() && request.auth.uid == userId
+            && request.resource.data.userId == userId
+            && request.resource.data.status in ['confirmed', 'waitlist']
+            && request.resource.data.checkedIn == false;
+
+        allow update: if isSignedIn() && (
+        // aluno confirma a vaga saindo da lista de espera
+                (request.auth.uid == userId
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                    .hasOnly(['status', 'qrToken'])
+                    && resource.data.checkedIn == false)
+            // organizador do evento registra o check-in (uma única vez)
+                || (isEventOwner(eventId)
+                && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['checkedIn', 'checkedInAt'])
+                && resource.data.checkedIn == false
+                && request.resource.data.checkedIn == true));
+
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn()
+            && request.resource.data.authorId == request.auth.uid;
+        allow update: if isSignedIn()
+            && resource.data.authorId == request.auth.uid
+            && request.resource.data.authorId == request.auth.uid;
+        allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      }
+
+      match /ratings/{userId} {
+        allow read: if isSignedIn();
+        allow create, update: if isSignedIn()
+            && request.auth.uid == userId
+            && request.resource.data.stars is int
+            && request.resource.data.stars >= 1
+            && request.resource.data.stars <= 5;
+      }
+    }
+
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+
+      match /{subcollection}/{docId} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
+    }
+  }
+}

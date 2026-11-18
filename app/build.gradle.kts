@@ -15,7 +15,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.campushub"
+        applicationId = "br.edu.uri.santiago.campushub"
         minSdk = 37
         targetSdk = 37
         versionCode = 1
@@ -46,6 +46,8 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
+    implementation("com.google.zxing:core:3.5.3")
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
@@ -60,11 +62,12 @@ dependencies {
 // ---------- Cobertura dos testes unitários (JaCoCo) ----------
 jacoco { toolVersion = "0.8.12" }
 
-// Classes que dependem de Android ou Firebase: cobertas por integração e E2E, não por testes unitários
+// Classes que dependem de Android ou Firebase: cobertas por integração e E2E
 val coverageExcludes = listOf(
     "**/R.class", "**/R\$*.class", "**/BuildConfig.*", "**/Manifest*.*",
     "**/*Activity*.*", "**/*Adapter*.*", "**/*ViewHolder*.*", "**/*Listener*.*",
-    "**/FavoriteRepository*.*", "**/SeedEvents*.*", "**/MediaDbHelper*.*", "**/ImageUtils*.*"
+    "**/*Repository*.*", "**/SeedEvents*.*", "**/MediaDbHelper*.*", "**/ImageUtils*.*",
+    "**/AddressGeocoder*.*", "**/ImageCodec*.*", "**/QrCodeImage*.*", "**/RoleRouter*.*"
 )
 
 fun coverageClasses(): FileCollection {
