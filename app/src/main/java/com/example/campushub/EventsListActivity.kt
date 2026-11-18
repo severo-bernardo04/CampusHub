@@ -14,6 +14,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.campushub.domain.AccessFilter
+import com.example.campushub.domain.EventFilter
+import com.example.campushub.domain.EventFilters
+import com.example.campushub.domain.EventLifecycle
+import com.example.campushub.domain.SituationFilter
 import com.example.campushub.model.AppUser
 import com.example.campushub.model.Event
 import com.google.firebase.auth.FirebaseAuth
@@ -70,7 +75,8 @@ class EventsListActivity : AppCompatActivity() {
         }
 
         loadUserCourse()
-        SeedEvents.run(db, auth.currentUser?.uid) { loadEvents() }
+        // Os eventos de exemplo são criados pelo organizador (painel do organizador)
+        loadEvents()
 
         searchInput.doAfterTextChanged { applyFilters() }
         courseFilter.setOnItemSelectedListener(SimpleSelectListener { applyFilters() })
@@ -113,9 +119,10 @@ class EventsListActivity : AppCompatActivity() {
     private fun loadEvents() {
         db.collection("events").get()
             .addOnSuccessListener { result ->
+                // Rascunhos só aparecem para o organizador dono
                 allEvents = result.documents.mapNotNull { doc ->
                     doc.toObject(Event::class.java)?.apply { id = doc.id }
-                }
+                }.filter { EventLifecycle.isVisibleToStudents(it.status) }
 
                 val courses = listOf("Todos os cursos") +
                         allEvents.map { it.hostCourse }.distinct().sorted()
@@ -133,44 +140,24 @@ class EventsListActivity : AppCompatActivity() {
     }
 
     private fun applyFilters() {
-        var filtered = allEvents
-
-        // Busca pelo título (ignora maiúsculas e acentos)
-        val query = searchInput.text.toString().trim().normalized()
-        if (query.isNotEmpty()) {
-            filtered = filtered.filter { it.title.normalized().contains(query) }
-        }
-
-        // Curso
-        val selectedCourse = courseFilter.selectedItem?.toString()
-        if (selectedCourse != null && selectedCourse != "Todos os cursos") {
-            filtered = filtered.filter { it.hostCourse == selectedCourse }
-        }
-
-        // Acesso
-        when (typeFilter.selectedItem?.toString()) {
-            "Abertos ao público" -> filtered = filtered.filter { it.isPublic }
-            "Do meu curso" -> filtered = filtered.filter { it.hostCourse == myCourse }
-        }
-
-        // Categoria (posição 0 = todas)
-        if (categoryFilter.selectedItemPosition > 0) {
-            val category = categoryFilter.selectedItem.toString()
-            filtered = filtered.filter { it.category == category }
-        }
-
-        // Situação: 0 = todos, 1 = próximos, 2 = encerrados
-        when (situationFilter.selectedItemPosition) {
-            1 -> filtered = filtered.filter { !it.isFinished() }
-            2 -> filtered = filtered.filter { it.isFinished() }
-        }
-
-        // Próximos primeiro (do mais perto ao mais longe), depois os encerrados (mais recentes antes)
-        filtered = filtered.sortedWith(
-            compareBy<Event>({ it.isFinished() }, {
-                if (it.isFinished()) -it.dateMillis else it.dateMillis
-            })
+        val filters = EventFilters(
+            query = searchInput.text.toString(),
+            course = courseFilter.selectedItem?.toString()?.takeIf { it != "Todos os cursos" },
+            access = when (typeFilter.selectedItem?.toString()) {
+                "Abertos ao público" -> AccessFilter.PUBLIC_ONLY
+                "Do meu curso" -> AccessFilter.MY_COURSE
+                else -> AccessFilter.ALL
+            },
+            category = if (categoryFilter.selectedItemPosition > 0)
+                categoryFilter.selectedItem.toString() else null,
+            situation = when (situationFilter.selectedItemPosition) {
+                1 -> SituationFilter.UPCOMING
+                2 -> SituationFilter.FINISHED
+                else -> SituationFilter.ALL
+            },
+            myCourse = myCourse
         )
+        val filtered = EventFilter.apply(allEvents, filters)
 
         emptyText.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
 

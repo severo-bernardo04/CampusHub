@@ -16,6 +16,7 @@ class EventAdapter(
 ) : RecyclerView.Adapter<EventAdapter.EventViewHolder>() {
 
     class EventViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val image: ImageView = view.findViewById(R.id.itemImage)
         val title: TextView = view.findViewById(R.id.itemTitle)
         val favorite: ImageView = view.findViewById(R.id.itemFavorite)
         val course: TextView = view.findViewById(R.id.itemCourse)
@@ -33,6 +34,10 @@ class EventAdapter(
     override fun onBindViewHolder(holder: EventViewHolder, position: Int) {
         val event = events[position]
         val context = holder.itemView.context
+
+        val bitmap = ImageCodec.decode(event.imageBase64, 640)
+        holder.image.visibility = if (bitmap != null) View.VISIBLE else View.GONE
+        holder.image.setImageBitmap(bitmap)
 
         holder.title.text = event.title
         holder.course.text =
