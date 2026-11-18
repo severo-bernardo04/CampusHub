@@ -33,13 +33,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.io.File
 import java.util.UUID
+import com.example.campushub.domain.PostPolicy
 
 class MediaActivity : AppCompatActivity() {
 
     companion object {
         private const val MAX_VIDEO_SECONDS = 15
         private const val MAX_AUDIO_MILLIS = 30_000
-        private const val MAX_VIDEO_BYTES = 50L * 1024 * 1024
     }
 
     private lateinit var auth: FirebaseAuth
@@ -176,7 +176,7 @@ class MediaActivity : AppCompatActivity() {
                 id = 0,
                 eventId = eventId,
                 authorId = user.uid,
-                authorName = myName.ifEmpty { user.email ?: "Aluno" },
+                authorName = PostPolicy.displayName(myName, user.email),
                 type = type,
                 path = file.absolutePath,
                 createdAt = System.currentTimeMillis()
@@ -186,7 +186,7 @@ class MediaActivity : AppCompatActivity() {
     }
 
     private fun confirmDelete(post: MediaPost) {
-        if (post.authorId != auth.currentUser?.uid) return
+        if (!PostPolicy.isOwner(post.authorId, auth.currentUser?.uid)) return
 
         AlertDialog.Builder(this)
             .setTitle("Excluir publicação")
@@ -218,7 +218,7 @@ class MediaActivity : AppCompatActivity() {
                 contentResolver.openInputStream(uri)?.use { input ->
                     file.outputStream().use { output -> input.copyTo(output) }
                 }
-                if (type == MediaPost.TYPE_VIDEO && file.length() > MAX_VIDEO_BYTES) {
+                if (type == MediaPost.TYPE_VIDEO && PostPolicy.isVideoTooLarge(file.length())) {
                     file.delete()
                     runOnUiThread { toast("Vídeo muito grande (máximo de 50 MB)") }
                 } else {

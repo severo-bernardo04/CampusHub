@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.campushub.model.MediaPost
 import java.io.File
+import com.example.campushub.domain.PostPolicy
 
 class MediaAdapter(
     private val posts: List<MediaPost>,
@@ -48,7 +49,8 @@ class MediaAdapter(
         holder.date.text = post.createdAt.toDateTimeString()
 
         // Só o autor pode excluir a própria publicação
-        holder.delete.visibility = if (post.authorId == myUid) View.VISIBLE else View.GONE
+        holder.delete.visibility =
+            if (PostPolicy.isOwner(post.authorId, myUid)) View.VISIBLE else View.GONE
         holder.delete.setOnClickListener { onDelete(post) }
 
         holder.photo.visibility = View.GONE

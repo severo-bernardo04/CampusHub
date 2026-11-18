@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.campushub.model.Comment
+import com.example.campushub.domain.PostPolicy
 
 class CommentAdapter(
     private val comments: List<Comment>,
@@ -33,11 +34,11 @@ class CommentAdapter(
 
         holder.author.text = comment.authorName
         holder.date.text = comment.createdAt.toDateTimeString() +
-                if (comment.updatedAt > 0) " · editado" else ""
+                if (PostPolicy.isEdited(comment.updatedAt)) " · editado" else ""
         holder.text.text = comment.text
 
         // Só o autor vê as ações de editar e excluir
-        val isMine = comment.authorId == myUid
+        val isMine = PostPolicy.isOwner(comment.authorId, myUid)
         holder.edit.visibility = if (isMine) View.VISIBLE else View.GONE
         holder.delete.visibility = if (isMine) View.VISIBLE else View.GONE
         holder.edit.setOnClickListener { onEdit(comment) }

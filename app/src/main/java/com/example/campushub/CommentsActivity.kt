@@ -11,6 +11,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.campushub.domain.PostPolicy
 import com.example.campushub.model.AppUser
 import com.example.campushub.model.Comment
 import com.google.firebase.auth.FirebaseAuth
@@ -86,12 +87,11 @@ class CommentsActivity : AppCompatActivity() {
 
     private fun postComment() {
         val user = auth.currentUser ?: return
-        val text = commentInput.text.toString().trim()
-        if (text.isEmpty()) return
+        val text = PostPolicy.cleanText(commentInput.text.toString()) ?: return
 
         val comment = Comment(
             authorId = user.uid,
-            authorName = myName.ifEmpty { user.email ?: "Aluno" },
+            authorName = PostPolicy.displayName(myName, user.email),
             text = text,
             createdAt = System.currentTimeMillis()
         )
@@ -119,8 +119,8 @@ class CommentsActivity : AppCompatActivity() {
             .setTitle("Editar comentário")
             .setView(container)
             .setPositiveButton("Salvar") { _, _ ->
-                val newText = input.text.toString().trim()
-                if (newText.isNotEmpty()) {
+                val newText = PostPolicy.cleanText(input.text.toString())
+                if (newText != null) {
                     commentsRef.document(comment.id)
                         .update(mapOf("text" to newText, "updatedAt" to System.currentTimeMillis()))
                         .addOnSuccessListener { loadComments() }
