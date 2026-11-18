@@ -31,8 +31,12 @@ class LoginActivity : AppCompatActivity() {
                 passwordInput.text.toString()
             ).addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    startActivity(Intent(this, EventsListActivity::class.java))
-                    finish()
+                    // Organizador vai para o painel; aluno para a lista de eventos
+                    RoleRouter.openHome(this) {
+                        Toast.makeText(
+                            this, "Não foi possível carregar seu perfil", Toast.LENGTH_LONG
+                        ).show()
+                    }
                 } else {
                     Toast.makeText(
                         this,
@@ -54,9 +58,6 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (auth.currentUser != null) {
-            startActivity(Intent(this, EventsListActivity::class.java))
-            finish()
-        }
+        if (auth.currentUser != null) RoleRouter.openHome(this)
     }
 }

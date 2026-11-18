@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.campushub.domain.UserRole
 import com.example.campushub.model.AppUser
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -31,19 +32,17 @@ class RegisterActivity : AppCompatActivity() {
         val emailInput = findViewById<EditText>(R.id.emailInput)
         val passwordInput = findViewById<EditText>(R.id.passwordInput)
         val courseSpinner = findViewById<Spinner>(R.id.courseSpinner)
+        val roleSpinner = findViewById<Spinner>(R.id.roleSpinner)
         val registerButton = findViewById<Button>(R.id.registerButton)
 
-        ArrayAdapter.createFromResource(
-            this, R.array.course_list, android.R.layout.simple_spinner_item
-        ).also { adapter ->
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            courseSpinner.adapter = adapter
-        }
+        setupSpinner(courseSpinner, R.array.course_list)
+        setupSpinner(roleSpinner, R.array.role_list)
 
         registerButton.setOnClickListener {
             val name = nameInput.text.toString()
             val email = emailInput.text.toString()
             val course = courseSpinner.selectedItem.toString()
+            val role = UserRole.fromLabel(roleSpinner.selectedItem.toString())
 
             auth.createUserWithEmailAndPassword(email, passwordInput.text.toString())
                 .addOnCompleteListener { task ->
@@ -58,10 +57,19 @@ class RegisterActivity : AppCompatActivity() {
                     }
 
                     val uid = auth.currentUser?.uid ?: return@addOnCompleteListener
-                    val user = AppUser(name = name, email = email, course = course)
+                    val user = AppUser(name = name, email = email, course = course, role = role)
                     db.collection("users").document(uid).set(user)
                         .addOnCompleteListener { finish() }
                 }
+        }
+    }
+
+    private fun setupSpinner(spinner: Spinner, arrayRes: Int) {
+        ArrayAdapter.createFromResource(
+            this, arrayRes, android.R.layout.simple_spinner_item
+        ).also { adapter ->
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            spinner.adapter = adapter
         }
     }
 }

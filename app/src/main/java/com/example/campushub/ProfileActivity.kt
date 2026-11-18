@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.example.campushub.domain.UserRole
 import com.example.campushub.model.AppUser
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -17,6 +18,9 @@ class ProfileActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
+
+    // Preserva o perfil (aluno/organizador) ao salvar as alterações
+    private var currentRole = UserRole.STUDENT
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +50,7 @@ class ProfileActivity : AppCompatActivity() {
 
         userRef.get().addOnSuccessListener { doc ->
             val user = doc.toObject(AppUser::class.java) ?: return@addOnSuccessListener
+            currentRole = user.role
             nameInput.setText(user.name)
             emailText.setText(user.email)
             courseSpinner.setSelection(courseAdapter.getPosition(user.course))
@@ -58,7 +63,8 @@ class ProfileActivity : AppCompatActivity() {
             val updated = AppUser(
                 name = nameInput.text.toString(),
                 email = emailText.text.toString(),
-                course = courseSpinner.selectedItem.toString()
+                course = courseSpinner.selectedItem.toString(),
+                role = currentRole
             )
             userRef.set(updated).addOnCompleteListener { finish() }
         }
