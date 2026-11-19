@@ -1,11 +1,10 @@
-package com.example.campushub.domain
+package com.example.campushub
 
-import com.example.campushub.DAY_MILLIS
-import com.example.campushub.NOW
-import com.example.campushub.testEvent
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
+import com.example.campushub.domain.AccessFilter
+import com.example.campushub.domain.EventFilter
+import com.example.campushub.domain.EventFilters
+import com.example.campushub.domain.SituationFilter
+import org.junit.Assert
 import org.junit.Test
 
 class EventFilterTest {
@@ -43,48 +42,48 @@ class EventFilterTest {
 
     @Test
     fun noFilters_returnsUpcomingByDateThenFinishedMostRecentFirst() {
-        assertEquals(listOf("2", "1", "3", "6", "5", "4"), ids())
+        Assert.assertEquals(listOf("2", "1", "3", "6", "5", "4"), ids())
     }
 
     @Test
     fun query_isCaseInsensitive() {
-        assertEquals(listOf("1"), ids(EventFilters(query = "SEMANA")))
+        Assert.assertEquals(listOf("1"), ids(EventFilters(query = "SEMANA")))
     }
 
     @Test
     fun query_ignoresAccents() {
-        assertEquals(listOf("2"), ids(EventFilters(query = "seguranca")))
-        assertEquals(listOf("5"), ids(EventFilters(query = "juri")))
+        Assert.assertEquals(listOf("2"), ids(EventFilters(query = "seguranca")))
+        Assert.assertEquals(listOf("5"), ids(EventFilters(query = "juri")))
     }
 
     @Test
     fun query_isTrimmed() {
-        assertEquals(listOf("6"), ids(EventFilters(query = "  xadrez ")))
+        Assert.assertEquals(listOf("6"), ids(EventFilters(query = "  xadrez ")))
     }
 
     @Test
     fun query_matchesAnywhereInTheTitle() {
-        assertEquals(listOf("3"), ids(EventFilters(query = "civil")))
+        Assert.assertEquals(listOf("3"), ids(EventFilters(query = "civil")))
     }
 
     @Test
     fun query_withNoMatch_returnsEmptyList() {
-        assertTrue(ids(EventFilters(query = "inexistente")).isEmpty())
+        Assert.assertTrue(ids(EventFilters(query = "inexistente")).isEmpty())
     }
 
     @Test
     fun blankQuery_doesNotFilter() {
-        assertEquals(6, ids(EventFilters(query = "   ")).size)
+        Assert.assertEquals(6, ids(EventFilters(query = "   ")).size)
     }
 
     @Test
     fun course_filtersByHostCourse() {
-        assertEquals(listOf("6", "4"), ids(EventFilters(course = "Outro")))
+        Assert.assertEquals(listOf("6", "4"), ids(EventFilters(course = "Outro")))
     }
 
     @Test
     fun access_publicOnly_hidesClosedEvents() {
-        assertEquals(
+        Assert.assertEquals(
             listOf("1", "3", "6", "4"),
             ids(EventFilters(access = AccessFilter.PUBLIC_ONLY))
         )
@@ -92,34 +91,41 @@ class EventFilterTest {
 
     @Test
     fun access_myCourse_showsOnlyEventsOfTheStudentCourse() {
-        val filters = EventFilters(access = AccessFilter.MY_COURSE, myCourse = "Ciência da Computação")
-        assertEquals(listOf("2", "1"), ids(filters))
+        val filters =
+            EventFilters(access = AccessFilter.MY_COURSE, myCourse = "Ciência da Computação")
+        Assert.assertEquals(listOf("2", "1"), ids(filters))
     }
 
     @Test
     fun access_myCourse_withUnknownCourse_returnsEmptyList() {
         val filters = EventFilters(access = AccessFilter.MY_COURSE, myCourse = "Medicina")
-        assertTrue(ids(filters).isEmpty())
+        Assert.assertTrue(ids(filters).isEmpty())
     }
 
     @Test
     fun category_filtersEvents() {
-        assertEquals(listOf("2", "5"), ids(EventFilters(category = "Workshop")))
+        Assert.assertEquals(listOf("2", "5"), ids(EventFilters(category = "Workshop")))
     }
 
     @Test
     fun category_null_doesNotFilter() {
-        assertEquals(6, ids(EventFilters(category = null)).size)
+        Assert.assertEquals(6, ids(EventFilters(category = null)).size)
     }
 
     @Test
     fun situation_upcoming_hidesFinishedEvents() {
-        assertEquals(listOf("2", "1", "3"), ids(EventFilters(situation = SituationFilter.UPCOMING)))
+        Assert.assertEquals(
+            listOf("2", "1", "3"),
+            ids(EventFilters(situation = SituationFilter.UPCOMING))
+        )
     }
 
     @Test
     fun situation_finished_hidesUpcomingEvents() {
-        assertEquals(listOf("6", "5", "4"), ids(EventFilters(situation = SituationFilter.FINISHED)))
+        Assert.assertEquals(
+            listOf("6", "5", "4"),
+            ids(EventFilters(situation = SituationFilter.FINISHED))
+        )
     }
 
     @Test
@@ -128,24 +134,24 @@ class EventFilterTest {
             situation = SituationFilter.FINISHED,
             access = AccessFilter.PUBLIC_ONLY
         )
-        assertEquals(listOf("6", "4"), ids(finishedPublic))
-        assertEquals(listOf("6"), ids(finishedPublic.copy(query = "torneio")))
+        Assert.assertEquals(listOf("6", "4"), ids(finishedPublic))
+        Assert.assertEquals(listOf("6"), ids(finishedPublic.copy(query = "torneio")))
     }
 
     @Test
     fun emptyInput_returnsEmptyList() {
-        assertTrue(EventFilter.apply(emptyList(), EventFilters(), NOW).isEmpty())
+        Assert.assertTrue(EventFilter.apply(emptyList(), EventFilters(), NOW).isEmpty())
     }
 
     @Test
     fun defaultFilters_haveNoRestrictions() {
         val filters = EventFilters()
-        assertEquals("", filters.query)
-        assertNull(filters.course)
-        assertEquals(AccessFilter.ALL, filters.access)
-        assertNull(filters.category)
-        assertEquals(SituationFilter.ALL, filters.situation)
-        assertEquals("", filters.myCourse)
+        Assert.assertEquals("", filters.query)
+        Assert.assertNull(filters.course)
+        Assert.assertEquals(AccessFilter.ALL, filters.access)
+        Assert.assertNull(filters.category)
+        Assert.assertEquals(SituationFilter.ALL, filters.situation)
+        Assert.assertEquals("", filters.myCourse)
     }
 
     @Test
@@ -157,6 +163,6 @@ class EventFilterTest {
             listOf(past, future), EventFilters(situation = SituationFilter.UPCOMING)
         )
 
-        assertEquals(listOf("f"), upcoming.map { it.id })
+        Assert.assertEquals(listOf("f"), upcoming.map { it.id })
     }
 }
